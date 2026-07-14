@@ -324,9 +324,7 @@ start
     repeat while (Новый статус?) is (нет) not (да)
 stop
 @enduml
-@enduml
 ```
-
 
 ## Процесс "Отказ"
 
