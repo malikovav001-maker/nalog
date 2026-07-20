@@ -173,11 +173,12 @@ paths:
                     passport:
                       series: 4512
                       number: 345678
+                      unitCode: 770-001
                       issuedBy: Отделом УФМС России по г. Москве
                       issuedDate: 2010-05-15
                   accountDetails:
                     bankName: Банк России
-                    bik: 044525225
+                    bik: "044525225"
                     accountNumber: 40802810123456789012
               childRequest:
                   summary: Вычет за ребенка
@@ -196,7 +197,7 @@ paths:
                         issuedBy: Управлением ЗАГС г. Москвы
                     accountDetails:
                       bankName: Банк России
-                      bik: 044525225
+                      bik: "044525225"
                       accountNumber: 40802810123456789012
       responses:
         '202':
@@ -266,7 +267,7 @@ paths:
                     inn: 1234567890
                   accountDetails:
                     bankName: Банк России
-                    bik: 044525225
+                    bik: "044525225"
                     accountNumber: 40802810123456789012
                   amount: 15000.00
                   fnsId: FNS-2025-001
@@ -324,6 +325,7 @@ paths:
                     passport:
                       series: 4513
                       number: 345679
+                      unitCode: 770-001
                       issuedBy: Отделом УФМС России по г. Москве
                       issuedDate: 2012-06-20
               updateAccount:
@@ -331,7 +333,7 @@ paths:
                 value:
                   accountDetails:
                     bankName: Новый банк
-                    bik: 044525226
+                    bik: "044525226"
                     accountNumber: 40802810234567890123
               submit:
                 summary: Подать заявление
@@ -367,7 +369,7 @@ paths:
                           inn: 1234567891
                         accountDetails:
                           bankName: Банк России
-                          bik: 044525225
+                          bik: "044525225"
                           accountNumber: 40802810123456789012
                         amount: 15000.00
                         dateCreated: 2025-01-15T10:00:00Z
@@ -399,7 +401,7 @@ paths:
                         inn: 1234567890
                       accountDetails:
                         bankName: Банк России
-                        bik: 044525225
+                        bik: "044525225"
                         accountNumber: 40802810123456789012
                       amount: 15000.00
                       dateCreated: 2025-01-15T10:00:00Z
@@ -431,7 +433,7 @@ paths:
                         inn: 1234567890
                       accountDetails:
                         bankName: Банк России
-                        bik: 044525225
+                        bik: "044525225"
                         accountNumber: 40802810123456789012
                       amount: 15000.00
                       dateCreated: 2025-01-15T10:00:00Z
@@ -479,10 +481,6 @@ components:
     RecipientInfo:
       type: object
       additionalProperties: false
-      required:
-        - type
-        - surname
-        - name
       properties:
         type:
           type: string
@@ -504,9 +502,9 @@ components:
           maxLength: 50
           description: Отчество получателя
         inn:
-          type: string
-          minLength: 10
-          maxLength: 12
+          type: integer
+          minimum: 1000000000    
+          maximum: 999999999999
           description: ИНН получателя
         passport:
           $ref: '#/components/schemas/PassportInfo'
@@ -516,22 +514,16 @@ components:
     PassportInfo:
       type: object
       additionalProperties: false
-      required:
-        - series
-        - number
-        - unitCode
-        - issuedBy
-        - issuedDate
       properties:
         series:
-          type: string
-          minLength: 4
-          maxLength: 4
+          type: integer
+          minimum: 1000
+          maximum: 9999
           description: Серия паспорта
         number:
-          type: string
-          minLength: 6
-          maxLength: 6
+          type: integer
+          minimum: 100000
+          maximum: 999999
           description: Номер паспорта
         unitCode:
           type: string
@@ -551,21 +543,16 @@ components:
     BirthCertificateInfo:
       type: object
       additionalProperties: false
-      required:
-        - series
-        - number
-        - issuedDate
-        - issuedBy
       properties:
         series:
-          type: string
-          minLength: 4
-          maxLength: 4
+          type: integer
+          minLength: 1000
+          maxLength: 9999
           description: Серия свидетельства о рождении
         number:
-          type: string
-          minLength: 6
-          maxLength: 6
+          type: integer
+          minimum: 100000
+          maximum: 999999
           description: Номер свидетельства о рождении
         issuedDate:
           type: string
@@ -580,10 +567,6 @@ components:
     AccountDetails:
       type: object
       additionalProperties: false
-      required:
-        - bankName
-        - bik
-        - accountNumber
       properties:
         bankName:
           type: string
@@ -596,9 +579,9 @@ components:
           maxLength: 9
           description: БИК банка
         accountNumber:
-          type: string
-          minLength: 20
-          maxLength: 20
+          type: integer
+          minimum: 10000000000000000000
+          maximum: 99999999999999999999
           description: Номер счета в банке
 
     CreateRequest:
@@ -633,13 +616,8 @@ components:
       type: object
       additionalProperties: false
       properties:
-        requestId:
-          type: string
-          format: uuid
-          description: Идентификатор заявления
-        status:
-          $ref: '#/components/schemas/RequestStatus'
-          description: Статус заявления
+        request:
+          $ref: '#/components/schemas/Request'
         _links:
           type: object
           additionalProperties: false
@@ -912,9 +890,9 @@ components:
           "maxLength": 50
         },
         "inn": {
-          "type": "string",
-          "minLength": 10,
-          "maxLength": 12
+          "type": "integer",
+          "minimum": 1000000000,
+          "maximum": 999999999999
         },
         "passport": {
           "type": "object",
@@ -922,14 +900,14 @@ components:
           "required": ["series", "number", "unitCode", "issuedBy", "issuedDate"],
           "properties": {
             "series": {
-              "type": "string",
-              "minLength": 4,
-              "maxLength": 4
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
             },
             "number": {
-              "type": "string",
-              "minLength": 6,
-              "maxLength": 6
+              "type": "integer",
+              "minimum": 100000,
+              "maximum": 999999
             },
             "unitCode": {
               "type": "string",
@@ -954,13 +932,13 @@ components:
           "properties": {
             "series": {
               "type": "string",
-              "minLength": 4,
-              "maxLength": 4
+              "minimum": 1000,
+              "maximum": 9999
             },
             "number": {
               "type": "string",
-              "minLength": 6,
-              "maxLength": 6
+              "minimum": 100000,
+              "maximum": 999999
             },
             "issuedDate": {
               "type": "string",
@@ -991,9 +969,9 @@ components:
           "maxLength": 9
         },
         "accountNumber": {
-          "type": "string",
-          "minLength": 20,
-          "maxLength": 20
+          "type": "integer",
+          "minimum": 10000000000000000000,
+          "maximum": 99999999999999999999
         }
       }
     }
