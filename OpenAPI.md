@@ -106,6 +106,10 @@ paths:
                       self:
                         href: /api/v1/requests/550e8400-e29b-41d4-a716-446655440001
                         method: GET
+                      edit:
+                          href: /api/v1/requests/550e8400-e29b-41d4-a716-446655440001
+                          method: PATCH
+                          title: Изменить заявление
                   - requestId: 550e8400-e29b-41d4-a716-446655440002
                     status: completed
                     dateCreated: 2024-12-01T09:00:00Z
@@ -114,6 +118,10 @@ paths:
                       self:
                         href: /api/v1/requests/550e8400-e29b-41d4-a716-446655440002
                         method: GET
+                      edit:
+                          href: /api/v1/requests/550e8400-e29b-41d4-a716-446655440001
+                          method: PATCH
+                          title: Изменить заявление
                 totalCount: 2
                 _links:
                   self:
@@ -158,7 +166,9 @@ paths:
                   category: education
                   recipient:
                     type: self
-                    fullName: Иванов Иван Иванович
+                    surname: Иванов
+                    name: Петр
+                    patronymic: Иванович
                     inn: 1234567890
                     passport:
                       series: 4512
@@ -176,7 +186,9 @@ paths:
                     category: education
                     recipient:
                       type: child
-                      fullName: Иванов Петр Иванович
+                      surname: Иванов
+                      name: Петр
+                      patronymic: Иванович
                       birthCertificate:
                         series: 1234
                         number: 567890
@@ -192,7 +204,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateResponse'
+                $ref: '#/components/schemas/Response'
               example:
                 requestId: 550e8400-e29b-41d4-a716-446655440001
                 status: created
@@ -201,6 +213,10 @@ paths:
                     href: /api/v1/requests/550e8400-e29b-41d4-a716-446655440001
                     method: GET
                     title: Получить информацию о заявлении
+                  edit:
+                    href: /api/v1/requests/550e8400-e29b-41d4-a716-446655440001
+                    method: PATCH
+                    title: Изменить заявление
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -236,13 +252,17 @@ paths:
                 $ref: '#/components/schemas/GetRequest'
               example:
                 request:
-                  id: 550e8400-e29b-41d4-a716-446655440001
+                  requestId: 550e8400-e29b-41d4-a716-446655440001
                   transactionId: 550e8400-e29b-41d4-a716-446655440000
                   category: education
                   status: sent_to_fns
+                  isDraft: 1
+                  isBlocked: 0
                   recipient:
                     type: self
-                    fullName: Иванов Иван Иванович
+                    surname: Иванов
+                    name: Петр
+                    patronymic: Иванович
                     inn: 1234567890
                   accountDetails:
                     bankName: Банк России
@@ -257,6 +277,174 @@ paths:
                     href: /api/v1/requests
                     method: GET
                     title: Получить список заявлений
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    patch:
+      summary: Изменить заявление
+      description: Обновляет заявление в статусе "created"
+      operationId: editRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор заявления
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Уникальный ключ идемпотентности
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditRequest'
+            examples:
+              updateRecipient:
+                summary: Изменить получателя
+                value:
+                  recipient:
+                    type: spouse
+                    surname: Иванова
+                    name: Мария
+                    patronymic: Петровна
+                    inn: 1234567891
+                    passport:
+                      series: 4513
+                      number: 345679
+                      issuedBy: Отделом УФМС России по г. Москве
+                      issuedDate: 2012-06-20
+              updateAccount:
+                summary: Изменить реквизиты счета
+                value:
+                  accountDetails:
+                    bankName: Новый банк
+                    bik: 044525226
+                    accountNumber: 40802810234567890123
+              submit:
+                summary: Подать заявление
+                value:
+                  isDraft: 1
+              cancel:
+                summary: Отменить заявление
+                value:
+                  isBlocked: 1
+      responses:
+        '200':
+          description: Заявление изменено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditResponse'
+              example:
+                updated:
+                    summary: После редактирования
+                    value:
+                      request:
+                        requestId: 550e8400-e29b-41d4-a716-446655440001
+                        transactionId: 550e8400-e29b-41d4-a716-446655440000
+                        category: education
+                        status: created
+                        isDraft: 1
+                        isBlocked: 0
+                        recipient:
+                          type: spouse
+                          surname: Иванова
+                          name: Мария
+                          patronymic: Петровна
+                          inn: 1234567891
+                        accountDetails:
+                          bankName: Банк России
+                          bik: 044525225
+                          accountNumber: 40802810123456789012
+                        amount: 15000.00
+                        dateCreated: 2025-01-15T10:00:00Z
+                        dateUpdated: 2025-01-20T16:00:00Z
+                      _links:
+                        self:
+                          href: /api/v1/requests/550e8400-e29b-41d4-a716-446655440001
+                          method: GET
+                          title: Получить информацию о заявлении
+                        list:
+                          href: /api/v1/requests
+                          method: GET
+                          title: Получить список заявлений
+                submitted:
+                  summary: После подачи
+                  value:
+                    request:
+                      requestId: 550e8400-e29b-41d4-a716-446655440001
+                      transactionId: 550e8400-e29b-41d4-a716-446655440000
+                      category: education
+                      status: sent_to_partner
+                      isDraft: 1
+                      isBlocked: 0
+                      recipient:
+                        type: self
+                        surname: Иванов
+                        name: Иван
+                        patronymic: Иванович
+                        inn: 1234567890
+                      accountDetails:
+                        bankName: Банк России
+                        bik: 044525225
+                        accountNumber: 40802810123456789012
+                      amount: 15000.00
+                      dateCreated: 2025-01-15T10:00:00Z
+                      dateUpdated: 2025-01-20T16:00:00Z
+                    _links:
+                      self:
+                        href: /api/v1/requests/550e8400-e29b-41d4-a716-446655440001
+                        method: GET
+                        title: Получить заявление
+                      list:
+                        href: /api/v1/requests
+                        method: GET
+                        title: Получить список заявлений
+                cancelled:
+                  summary: После отмены
+                  value:
+                    request:
+                      requestId: 550e8400-e29b-41d4-a716-446655440001
+                      transactionId: 550e8400-e29b-41d4-a716-446655440000
+                      category: education
+                      status: created
+                      isDraft: 0
+                      isBlocked: 1
+                      recipient:
+                        type: self
+                        surname: Иванов
+                        name: Иван
+                        patronymic: Иванович
+                        inn: 1234567890
+                      accountDetails:
+                        bankName: Банк России
+                        bik: 044525225
+                        accountNumber: 40802810123456789012
+                      amount: 15000.00
+                      dateCreated: 2025-01-15T10:00:00Z
+                      dateUpdated: 2025-01-20T16:00:00Z
+                    _links:
+                      self:
+                        href: /api/v1/requests/550e8400-e29b-41d4-a716-446655440001
+                        method: GET
+                        title: Получить заявление
+                      list:
+                        href: /api/v1/requests
+                        method: GET
+                        title: Получить список заявлений
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -265,6 +453,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
@@ -279,31 +469,45 @@ components:
     RequestCategory:
       type: string
       enum: [education, medical, sport, insurance, pension, charity]
+      description: Категории для социального налогового вычета
 
     RequestStatus:
       type: string
       enum: [created, sent_to_partner, sent_to_fns, prefilled, verification, refund, completed, rejected]
+      description: Статусы заявления
 
     RecipientInfo:
       type: object
       additionalProperties: false
       required:
         - type
-        - fullName
+        - surname
+        - name
       properties:
         type:
           type: string
           enum: [self, spouse, parent, child]
-        fullName:
+          description: Тип получателя вычета (себя, супруг, родитель, ребенок)
+        surname:
           type: string
           minLength: 1
-          maxLength: 200
-          pattern: ^[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+$
+          maxLength: 50
+          description: Фамилия получателя
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Имя получателя
+        patronymic:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Отчество получателя
         inn:
           type: string
           minLength: 10
           maxLength: 12
-          pattern: ^\d{10,12}$
+          description: ИНН получателя
         passport:
           $ref: '#/components/schemas/PassportInfo'
         birthCertificate:
@@ -315,6 +519,7 @@ components:
       required:
         - series
         - number
+        - unitCode
         - issuedBy
         - issuedDate
       properties:
@@ -322,20 +527,26 @@ components:
           type: string
           minLength: 4
           maxLength: 4
-          pattern: ^\d{4}$
+          description: Серия паспорта
         number:
           type: string
           minLength: 6
           maxLength: 6
-          pattern: ^\d{6}$
+          description: Номер паспорта
+        unitCode:
+          type: string
+          minLength: 7
+          maxLength: 7
+          description: Код подразделения
         issuedBy:
           type: string
           minLength: 1
-          maxLength: 200
+          maxLength: 255
+          description: Кем выдан
         issuedDate:
           type: string
           format: date
-          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Дата выдачи
 
     BirthCertificateInfo:
       type: object
@@ -350,20 +561,21 @@ components:
           type: string
           minLength: 4
           maxLength: 4
-          pattern: ^\d{4}$
+          description: Серия свидетельства о рождении
         number:
           type: string
           minLength: 6
           maxLength: 6
-          pattern: ^\d{6}$
+          description: Номер свидетельства о рождении
         issuedDate:
           type: string
           format: date
-          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Дата выдачи
         issuedBy:
           type: string
           minLength: 1
-          maxLength: 200
+          maxLength: 255
+          description: Кем выдано
 
     AccountDetails:
       type: object
@@ -376,17 +588,18 @@ components:
         bankName:
           type: string
           minLength: 1
-          maxLength: 200
+          maxLength: 255
+          description: Наименование банка
         bik:
           type: string
           minLength: 9
           maxLength: 9
-          pattern: ^\d{9}$
+          description: БИК банка
         accountNumber:
           type: string
           minLength: 20
           maxLength: 20
-          pattern: ^\d{20}$
+          description: Номер счета в банке
 
     CreateRequest:
       type: object
@@ -399,12 +612,42 @@ components:
         transactionId:
           type: string
           format: uuid
+          description: Идентификатор транзакции
         category:
           $ref: '#/components/schemas/RequestCategory'
         recipient:
           $ref: '#/components/schemas/RecipientInfo'
         accountDetails:
           $ref: '#/components/schemas/AccountDetails'
+
+    EditRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        recipient:
+          $ref: '#/components/schemas/RecipientInfo'
+        accountDetails:
+          $ref: '#/components/schemas/AccountDetails'
+    
+    EditResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: Идентификатор заявления
+        status:
+          $ref: '#/components/schemas/RequestStatus'
+          description: Статус заявления
+        _links:
+          type: object
+          additionalProperties: false
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+            list:
+              $ref: '#/components/schemas/Link'
 
     Link:
       type: object
@@ -416,49 +659,70 @@ components:
         href:
           type: string
           format: uri
+          description: URL ресурса
         method:
           type: string
           enum: [GET, POST, PUT, PATCH, DELETE]
+          description: HTTP-метод
         title:
           type: string
+          description: Описание
 
-    CreateResponse:
+    Response:
       type: object
       additionalProperties: false
       properties:
         requestId:
           type: string
           format: uuid
+          description: Идентификатор заявления
         status:
           $ref: '#/components/schemas/RequestStatus'
+          description: Статус заявления
         _links:
           type: object
           additionalProperties: false
           properties:
             self:
               $ref: '#/components/schemas/Link'
+            edit:
+              $ref: '#/components/schemas/Link'
 
     Request:
       type: object
       additionalProperties: false
       required:
-        - id
+        - requestId
         - transactionId
         - category
         - status
+        - isDraft
+        - isBlocked
         - dateCreated
         - dateUpdated
       properties:
-        id:
+        requestId:
           type: string
           format: uuid
+          description: Идентификатор заявления
         transactionId:
           type: string
           format: uuid
+          description: Идентификатор транзакции
         category:
           $ref: '#/components/schemas/RequestCategory'
         status:
           $ref: '#/components/schemas/RequestStatus'
+        isDraft:
+          type: integer
+          enum: [0, 1]
+          default: 0
+          description: Утверждение заявления
+        isBlocked:
+          type: integer
+          enum: [0, 1]
+          default: 0
+          description: Блокировка
         recipient:
           $ref: '#/components/schemas/RecipientInfo'
         accountDetails:
@@ -467,14 +731,18 @@ components:
           type: number
           format: double
           minimum: 0
+          description: Сумма возврата по заявлению
         fnsId:
           type: string
+          description: Идентификатор заявления в ФНС
         dateCreated:
           type: string
           format: date-time
+          description: Дата и время создания заявления
         dateUpdated:
           type: string
           format: date-time
+          description: Дата и время последнего обновления заявления
 
     GetRequest:
       type: object
@@ -496,15 +764,18 @@ components:
         requestId:
           type: string
           format: uuid
+          description: Идентификатор заявления
         status:
           $ref: '#/components/schemas/RequestStatus'
         dateCreated:
           type: string
           format: date-time
+          description: Дата и время создания заявления
         amount:
           type: number
           format: double
           minimum: 0
+          description: Сумма возврата по заявлению
         _links:
           type: object
           additionalProperties: false
@@ -522,6 +793,7 @@ components:
             $ref: '#/components/schemas/RequestSummary'
         totalCount:
           type: integer
+          description: Количество заявлений
         _links:
           type: object
           additionalProperties: false
@@ -537,10 +809,13 @@ components:
       properties:
         status:
           type: integer
+          description: Код ошибки
         error:
           type: string
+          description: Описание ошибки
         message:
           type: string
+          description: Информация об ошибке
 
   responses:
     BadRequest:
@@ -595,107 +870,112 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
 ```
 ## JSON-Schema
-
+**CreateRequest: Запрос на создание заявления**
 ```json
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "definitions": {
-    "RequestCategory": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["transactionId", "category", "recipient"],
+  "properties": {
+    "transactionId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36
+    },
+    "category": {
       "type": "string",
       "enum": ["education", "medical", "sport", "insurance", "pension", "charity"]
     },
-    "RequestStatus": {
-      "type": "string",
-      "enum": ["created", "sent_to_partner", "sent_to_fns", "prefilled", "verification", "refund", "completed", "rejected"]
-    },
-    "PassportInfo": {
+    "recipient": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["series", "number", "issuedBy", "issuedDate"],
-      "properties": {
-        "series": {
-          "type": "string",
-          "minLength": 4,
-          "maxLength": 4,
-          "pattern": "^\\d{4}$"
-        },
-        "number": {
-          "type": "string",
-          "minLength": 6,
-          "maxLength": 6,
-          "pattern": "^\\d{6}$"
-        },
-        "issuedBy": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
-        },
-        "issuedDate": {
-          "type": "string",
-          "format": "date",
-          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-        }
-      }
-    },
-    "BirthCertificateInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["series", "number", "issuedDate", "issuedBy"],
-      "properties": {
-        "series": {
-          "type": "string",
-          "minLength": 4,
-          "maxLength": 4,
-          "pattern": "^\\d{4}$"
-        },
-        "number": {
-          "type": "string",
-          "minLength": 6,
-          "maxLength": 6,
-          "pattern": "^\\d{6}$"
-        },
-        "issuedDate": {
-          "type": "string",
-          "format": "date",
-          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-        },
-        "issuedBy": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
-        }
-      }
-    },
-    "RecipientInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["type", "fullName"],
+      "required": ["type", "surname", "name"],
       "properties": {
         "type": {
           "type": "string",
           "enum": ["self", "spouse", "parent", "child"]
         },
-        "fullName": {
+        "surname": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 200,
-          "pattern": "^[А-ЯЁ][а-яё]+\\s[А-ЯЁ][а-яё]+\\s[А-ЯЁ][а-яё]+$"
+          "maxLength": 50
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "patronymic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
         },
         "inn": {
           "type": "string",
           "minLength": 10,
-          "maxLength": 12,
-          "pattern": "^\\d{10,12}$"
+          "maxLength": 12
         },
         "passport": {
-          "$ref": "#/definitions/PassportInfo"
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["series", "number", "unitCode", "issuedBy", "issuedDate"],
+          "properties": {
+            "series": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 4
+            },
+            "number": {
+              "type": "string",
+              "minLength": 6,
+              "maxLength": 6
+            },
+            "unitCode": {
+              "type": "string",
+              "minLength": 7,
+              "maxLength": 7
+            },
+            "issuedBy": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "issuedDate": {
+              "type": "string",
+              "format": "date"
+            }
+          }
         },
         "birthCertificate": {
-          "$ref": "#/definitions/BirthCertificateInfo"
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["series", "number", "issuedDate", "issuedBy"],
+          "properties": {
+            "series": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 4
+            },
+            "number": {
+              "type": "string",
+              "minLength": 6,
+              "maxLength": 6
+            },
+            "issuedDate": {
+              "type": "string",
+              "format": "date"
+            },
+            "issuedBy": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            }
+          }
         }
       }
     },
-    "AccountDetails": {
+    "accountDetails": {
       "type": "object",
       "additionalProperties": false,
       "required": ["bankName", "bik", "accountNumber"],
@@ -703,211 +983,71 @@ components:
         "bankName": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 200
+          "maxLength": 255
         },
         "bik": {
           "type": "string",
           "minLength": 9,
-          "maxLength": 9,
-          "pattern": "^\\d{9}$"
+          "maxLength": 9
         },
         "accountNumber": {
           "type": "string",
           "minLength": 20,
-          "maxLength": 20,
-          "pattern": "^\\d{20}$"
+          "maxLength": 20
         }
       }
+    }
+  }
+}
+```
+**Response: Ответ на создание заявления**
+```json
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36
     },
-    "CreateRequest": {
+    "status": {
+      "type": "string",
+      "enum": ["created", "sent_to_partner", "sent_to_fns", "prefilled", "verification", "refund", "completed", "rejected"]
+    },
+    "_links": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["transactionId", "category", "recipient"],
       "properties": {
-        "transactionId": {
-          "type": "string",
-          "format": "uuid"
+        "self": {
+          "$ref": "#/definitions/link"
         },
-        "category": {
-          "$ref": "#/definitions/RequestCategory"
-        },
-        "recipient": {
-          "$ref": "#/definitions/RecipientInfo"
-        },
-        "accountDetails": {
-          "$ref": "#/definitions/AccountDetails"
+        "edit": {
+          "$ref": "#/definitions/link"
         }
       }
-    },
-    "Link": {
+    }
+  },
+  "definitions": {
+    "link": {
       "type": "object",
       "additionalProperties": false,
       "required": ["href", "method"],
       "properties": {
         "href": {
           "type": "string",
-          "format": "uri"
+          "format": "url",
+          "minLength": 1
         },
         "method": {
           "type": "string",
           "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
         },
         "title": {
-          "type": "string"
-        }
-      }
-    },
-    "CreateResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "requestId": {
           "type": "string",
-          "format": "uuid"
-        },
-        "status": {
-          "$ref": "#/definitions/RequestStatus"
-        },
-        "_links": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "self": {
-              "$ref": "#/definitions/Link"
-            }
-          }
-        }
-      }
-    },
-    "Request": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "transactionId", "category", "status", "dateCreated", "dateUpdated"],
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "transactionId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "category": {
-          "$ref": "#/definitions/RequestCategory"
-        },
-        "status": {
-          "$ref": "#/definitions/RequestStatus"
-        },
-        "recipient": {
-          "$ref": "#/definitions/RecipientInfo"
-        },
-        "accountDetails": {
-          "$ref": "#/definitions/AccountDetails"
-        },
-        "amount": {
-          "type": "number",
-          "minimum": 0
-        },
-        "fnsId": {
-          "type": "string"
-        },
-        "dateCreated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "dateUpdated": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "GetRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "request": {
-          "$ref": "#/definitions/Request"
-        },
-        "_links": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "list": {
-              "$ref": "#/definitions/Link"
-            }
-          }
-        }
-      }
-    },
-    "RequestSummary": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "requestId": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "status": {
-          "$ref": "#/definitions/RequestStatus"
-        },
-        "dateCreated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "amount": {
-          "type": "number",
-          "minimum": 0
-        },
-        "_links": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "self": {
-              "$ref": "#/definitions/Link"
-            }
-          }
-        }
-      }
-    },
-    "ListRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/RequestSummary"
-          }
-        },
-        "totalCount": {
-          "type": "integer"
-        },
-        "_links": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "self": {
-              "$ref": "#/definitions/Link"
-            },
-            "create": {
-              "$ref": "#/definitions/Link"
-            }
-          }
-        }
-      }
-    },
-    "ErrorResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "status": {
-          "type": "integer"
-        },
-        "error": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
+          "minLength": 1,
+          "maxLength": 200
         }
       }
     }
